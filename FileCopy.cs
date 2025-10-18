@@ -32,8 +32,9 @@ namespace HS_FileCopy
 
 
             // bool copyStatus = this._copyFile();
-            this.SplitAndCopyFile(1); // 1 MB chunks
-            this._assemlbeChunks();
+            this._splitAndCopyFile(1); // 1 MB chunks
+            this._assembleChunks();
+            this._cleanUpChunks();
             bool copyStatus = this._verifyCopy();
 
             int endTime = DateTime.Now.Millisecond;
@@ -99,7 +100,7 @@ namespace HS_FileCopy
             return false;
         }
 
-        private void SplitAndCopyFile(int chunkSizeMB)
+        private void _splitAndCopyFile(int chunkSizeMB)
         {
 
             int chunkSizeBytes = chunkSizeMB * 1024 * 1024;
@@ -126,17 +127,33 @@ namespace HS_FileCopy
             }
         }
 
-        private void _assemlbeChunks()
+        private void _assembleChunks()
         {
+
             string[] chunkFiles = Directory.GetFiles(this._outputDirectory, "chunk_*.part");
             Array.Sort(chunkFiles);
 
             using FileStream outputStream = new FileStream(this._outputFilePath!, FileMode.Create, FileAccess.Write);
 
+            FileHelper fileHelper = new FileHelper();
+
             foreach (string chunkFile in chunkFiles)
             {
                 using FileStream chunkStream = new FileStream(chunkFile, FileMode.Open, FileAccess.Read);
                 chunkStream.CopyTo(outputStream);
+                fileHelper.DeleteFile(chunkFile);
+            }
+        }
+        
+        private void _cleanUpChunks()
+        {
+            string[] chunkFiles = Directory.GetFiles(this._outputDirectory, "chunk_*.part");
+
+            FileHelper fileHelper = new FileHelper();
+
+            foreach (string chunkFile in chunkFiles)
+            {
+                fileHelper.DeleteFile(chunkFile);
             }
         }
     }
