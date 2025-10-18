@@ -17,6 +17,11 @@ namespace HS_FileCopy
             return (exists, fileSizeBytes);
         }
 
+        public bool DirectoryExists(string dirPath)
+        {
+            return Directory.Exists(dirPath);
+        }
+
         public void DeleteFile(string filePath)
         {
             File.Delete(filePath);
@@ -31,6 +36,14 @@ namespace HS_FileCopy
                     //BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                     return md5.ComputeHash(stream);
                 }
+            }
+        }
+
+        public byte[] GetChecksum(FileStream fileStream)
+        {
+            using (var md5 = MD5.Create())
+            {
+                return md5.ComputeHash(fileStream);
             }
         }
 
