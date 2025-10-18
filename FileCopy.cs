@@ -125,7 +125,8 @@ namespace HS_FileCopy
                     chunkStream.Write(buffer, 0, bytesRead);
                 }
 
-                byte[] inputChecksum = fileHelper.GetChecksum(buffer);
+                /* add bytesRead for the last chunk */
+                byte[] inputChecksum = fileHelper.GetChecksum(buffer, bytesRead);
                 byte[] targetChecksum = fileHelper.GetChecksum(targetChunkPath);
                 bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
                 string checkSumString = BitConverter.ToString(inputChecksum);
@@ -155,8 +156,11 @@ namespace HS_FileCopy
 
             foreach (string chunkFile in chunkFiles)
             {
-                using FileStream chunkStream = new FileStream(chunkFile, FileMode.Open, FileAccess.Read);
-                chunkStream.CopyTo(outputStream);
+                using (FileStream chunkStream = new FileStream(chunkFile, FileMode.Open, FileAccess.Read))
+                {
+                    chunkStream.CopyTo(outputStream);   
+                }
+                
                 fileHelper.DeleteFile(chunkFile);
             }
         }

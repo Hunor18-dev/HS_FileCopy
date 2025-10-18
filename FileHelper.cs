@@ -38,11 +38,11 @@ namespace HS_FileCopy
             }
         }
 
-        public byte[] GetChecksum(byte[] byteStream)
+        public byte[] GetChecksum(byte[] byteStream, int bytesRead)
         {
             using (var md5 = MD5.Create())
             {
-                using (var stream = new MemoryStream(byteStream))
+                using (var stream = new MemoryStream(byteStream, 0, bytesRead))
                 {
                     
                     return md5.ComputeHash(stream);
