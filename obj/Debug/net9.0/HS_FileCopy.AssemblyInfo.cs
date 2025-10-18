@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HS_FileCopy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b7310fee13724fd7c7ff2ed80573f13f8c9a0257")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c37ab0732d5dac7b0e1ea029018d1e2441208f0a")]
 [assembly: System.Reflection.AssemblyProductAttribute("HS_FileCopy")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HS_FileCopy")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

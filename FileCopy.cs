@@ -15,7 +15,7 @@ namespace HS_FileCopy
         public bool Copy()
         {
             this._displayCurrentTime();
-
+            File.Copy(this._inputFilePath, this._outputFilePath);
             return true;
         }
 

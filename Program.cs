@@ -8,8 +8,8 @@ namespace HS_FileCopy
         {
             Console.WriteLine("Started file copy...\n\n");
 
-            string inputFilePath = "C:\\path\\to\\source\\file.txt";
-            string outputFilePath = "C:\\path\\to\\destination\\file.txt";
+            string inputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\InputDir\\InputFile.bin";
+            string outputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\OutputDir\\OutputFile.bin";
 
             var fileHelper = new FileHelper();
             (bool inputExists, long inputSize) = fileHelper.FileExists(inputFilePath);
