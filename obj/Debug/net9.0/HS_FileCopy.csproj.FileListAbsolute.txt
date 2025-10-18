@@ -1,0 +1,15 @@
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\bin\Debug\net9.0\HS_FileCopy.exe
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\bin\Debug\net9.0\HS_FileCopy.deps.json
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\bin\Debug\net9.0\HS_FileCopy.runtimeconfig.json
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\bin\Debug\net9.0\HS_FileCopy.dll
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\bin\Debug\net9.0\HS_FileCopy.pdb
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.AssemblyInfoInputs.cache
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.AssemblyInfo.cs
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.csproj.CoreCompileInputs.cache
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.sourcelink.json
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.dll
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\refint\HS_FileCopy.dll
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.pdb
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\HS_FileCopy.genruntimeconfig.cache
+C:\Users\user\Desktop\Projects\HornetSecurity_FileCopy\obj\Debug\net9.0\ref\HS_FileCopy.dll

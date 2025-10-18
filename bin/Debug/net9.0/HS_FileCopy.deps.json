@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "HS_FileCopy/1.0.0": {
+        "runtime": {
+          "HS_FileCopy.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HS_FileCopy/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
