@@ -93,8 +93,9 @@ namespace HS_FileCopy
 
             if (inputExists && outputExists && inputSize == outputSize)
             {
-                byte[] inputChecksum = fileHelper.GetChecksum(this._inputFilePath);
-                byte[] outputChecksum = fileHelper.GetChecksum(this._outputFilePath);
+                /* for final check use sha256 */
+                byte[] inputChecksum = fileHelper.GetHashSHA256(this._inputFilePath);
+                byte[] outputChecksum = fileHelper.GetHashSHA256(this._outputFilePath);
                 return inputChecksum.SequenceEqual(outputChecksum);
             }
             return false;
@@ -126,8 +127,9 @@ namespace HS_FileCopy
                 }
 
                 /* add bytesRead for the last chunk */
-                byte[] inputChecksum = fileHelper.GetChecksum(buffer, bytesRead);
-                byte[] targetChecksum = fileHelper.GetChecksum(targetChunkPath);
+                /* for chunck check use md5, sha256 will be used after assemble */
+                byte[] inputChecksum = fileHelper.GetHashMD5(buffer, bytesRead);
+                byte[] targetChecksum = fileHelper.GetHashMD5(targetChunkPath);
                 bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
                 string checkSumString = BitConverter.ToString(inputChecksum);
 

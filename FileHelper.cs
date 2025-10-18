@@ -27,7 +27,18 @@ namespace HS_FileCopy
             File.Delete(filePath);
         }
 
-        public byte[] GetChecksum(string filePath)
+        public byte[] GetHashSHA256(string filePath)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                using (var stream = File.OpenRead(filePath))
+                {
+                    return sha256.ComputeHash(stream);
+                }
+            }
+        }
+
+        public byte[] GetHashMD5(string filePath)
         {
             using (var md5 = MD5.Create())
             {
@@ -38,7 +49,7 @@ namespace HS_FileCopy
             }
         }
 
-        public byte[] GetChecksum(byte[] byteStream, int bytesRead)
+        public byte[] GetHashMD5(byte[] byteStream, int bytesRead)
         {
             using (var md5 = MD5.Create())
             {
@@ -50,7 +61,7 @@ namespace HS_FileCopy
             }
         }
 
-        public byte[] GetChecksum(FileStream fileStream)
+        public byte[] GetHashMD5(FileStream fileStream)
         {
             using (var md5 = MD5.Create())
             {
