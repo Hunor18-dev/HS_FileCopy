@@ -33,7 +33,8 @@ namespace HS_FileCopy
 
             // bool copyStatus = this._copyFile();
             this.SplitAndCopyFile(1); // 1 MB chunks
-            bool copyStatus = true;
+            this._assemlbeChunks();
+            bool copyStatus = this._verifyCopy();
 
             int endTime = DateTime.Now.Millisecond;
             Console.WriteLine($"File copy took {endTime - startTime} milliseconds.");
@@ -122,6 +123,20 @@ namespace HS_FileCopy
                     chunkStream.Write(buffer, 0, bytesRead);
                 }
                 index++;
+            }
+        }
+
+        private void _assemlbeChunks()
+        {
+            string[] chunkFiles = Directory.GetFiles(this._outputDirectory, "chunk_*.part");
+            Array.Sort(chunkFiles);
+
+            using FileStream outputStream = new FileStream(this._outputFilePath!, FileMode.Create, FileAccess.Write);
+
+            foreach (string chunkFile in chunkFiles)
+            {
+                using FileStream chunkStream = new FileStream(chunkFile, FileMode.Open, FileAccess.Read);
+                chunkStream.CopyTo(outputStream);
             }
         }
     }
