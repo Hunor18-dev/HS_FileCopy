@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Security.Cryptography;
 
 namespace HS_FileCopy
 {
@@ -20,6 +22,17 @@ namespace HS_FileCopy
             File.Delete(filePath);
         }
 
+        public byte[] GetChecksum(string filePath)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filePath))
+                {
+                    //BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                    return md5.ComputeHash(stream);
+                }
+            }
+        }
 
     }
 }

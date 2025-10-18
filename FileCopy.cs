@@ -14,6 +14,25 @@ namespace HS_FileCopy
         }
         public bool StartFileCopy()
         {
+
+            int startTime = DateTime.Now.Millisecond;
+
+            if (!this._verifyFiles())
+            {
+                return false;
+            }
+
+
+            bool copyStatus = this._copyFile();
+
+            int endTime = DateTime.Now.Millisecond;
+            Console.WriteLine($"File copy took {endTime - startTime} milliseconds.");
+
+            return copyStatus;
+        }
+
+        private bool _verifyFiles()
+        {
             var fileHelper = new FileHelper();
             (bool inputExists, long inputSize) = fileHelper.FileExists(this._inputFilePath);
             (bool outputExists, long outputSize) = fileHelper.FileExists(this._outputFilePath);
@@ -31,15 +50,35 @@ namespace HS_FileCopy
                 Console.WriteLine("Output file already exists! Output file will be overwritten.");
                 fileHelper.DeleteFile(this._outputFilePath);
             }
-
-            this._displayCurrentTime();
-            File.Copy(this._inputFilePath, this._outputFilePath);
             return true;
         }
 
-        private void _displayCurrentTime()
+        private bool _copyFile()
         {
-            Console.WriteLine($"Current time: {DateTime.Now.Millisecond}");
+
+            File.Copy(this._inputFilePath, this._outputFilePath);
+            if (!this._verifyCopy())
+            {
+                Console.WriteLine("File copy verification failed!");
+                return false;
+            }
+            return true;
+
+        }
+
+        private bool _verifyCopy()
+        {
+            var fileHelper = new FileHelper();
+            (bool inputExists, long inputSize) = fileHelper.FileExists(this._inputFilePath);
+            (bool outputExists, long outputSize) = fileHelper.FileExists(this._outputFilePath);
+
+            if (inputExists && outputExists && inputSize == outputSize)
+            {
+                byte[] inputChecksum = fileHelper.GetChecksum(this._inputFilePath);
+                byte[] outputChecksum = fileHelper.GetChecksum(this._outputFilePath);
+                return inputChecksum.SequenceEqual(outputChecksum);
+            }
+            return false;
         }
     }
 }
