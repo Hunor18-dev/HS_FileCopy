@@ -22,9 +22,6 @@ namespace HS_FileCopy
         }
         public bool StartFileCopy()
         {
-
-            int startTime = DateTime.Now.Millisecond;
-
             if (!this._verifyFiles())
             {
                 return false;
@@ -32,13 +29,10 @@ namespace HS_FileCopy
 
 
             // bool copyStatus = this._copyFile();
-            this._splitAndCopyFile(1); // 1 MB chunks
+            this._splitAndCopyFileParallel(1); // 1 MB chunks
             this._assembleChunks();
             this._cleanUpChunks();
             bool copyStatus = this._verifyCopy();
-
-            int endTime = DateTime.Now.Millisecond;
-            Console.WriteLine($"File copy took {endTime - startTime} milliseconds.");
 
             return copyStatus;
         }
@@ -101,7 +95,7 @@ namespace HS_FileCopy
             return false;
         }
 
-        private void _splitAndCopyFile(int chunkSizeMB)
+        private void _splitAndCopyFileLinear(int chunkSizeMB)
         {
             FileHelper fileHelper = new FileHelper();
 
@@ -119,7 +113,7 @@ namespace HS_FileCopy
                 string chunkFileName = $"chunk_{index:D4}.part";
                 string targetChunkPath = Path.Combine(_outputDirectory, chunkFileName);
 
-                // Write chunk locally
+                // Write chunk
                 using (FileStream chunkStream = new FileStream(targetChunkPath, FileMode.Create, FileAccess.Write))
                 {
                     /* keep bytesRead, might not be exact size */
@@ -135,15 +129,108 @@ namespace HS_FileCopy
 
                 if (checksumsMatch)
                 {
-                    Console.WriteLine($"Position: {index}: Checksum: {checkSumString}  - ChunkName: {chunkFileName}");
+                    Console.WriteLine($"Position: {index}: Hash: {checkSumString}  - ChunkName: {chunkFileName}");
                 }
                 else
                 {
-                    Console.WriteLine($"ChecksumError: Position: {index}: Checksum: {checkSumString}  - ChunkName: {chunkFileName}");
+                    Console.WriteLine($"HashError: Position: {index}: ChunkName: {chunkFileName}");
                 }
 
                 index++;
             }
+        }
+
+        private bool _splitAndCopyFileParallel(int chunkSizeMB, int parallelTasks = 2, int maxRetries = 3)
+        {
+            if (chunkSizeMB < 1)
+            {
+                chunkSizeMB = 1;
+            }
+
+            if (parallelTasks < 1)
+            {
+                parallelTasks = 1;
+            }
+
+            if (maxRetries < 1)
+            {
+                maxRetries = 1;
+            }
+
+            /* predefine the total chunks number */
+            long fileLength = new FileInfo(this._inputFilePath).Length;
+            long chunkSizeBytes = chunkSizeMB * 1024 * 1024;
+            int numChunks = (int)Math.Ceiling((double)fileLength / chunkSizeBytes);
+
+            Console.WriteLine($"Total number of chunks to be transfered: {numChunks}");
+
+            var semaphore = new SemaphoreSlim(parallelTasks);
+            FileHelper fileHelper = new FileHelper();
+            Parallel.For(0, numChunks, i =>
+            {
+                semaphore.Wait();
+                try
+                {
+                    long offset = i * chunkSizeBytes;
+                    /* handle last chunk size */
+                    long length = Math.Min(chunkSizeBytes, fileLength - offset);
+                    string chunkFileName = $"chunk_{i:D4}.part";
+                    string targetChunkPath = Path.Combine(_outputDirectory, chunkFileName);
+
+                    bool chunkCopied = false;
+                    int attempt = 0;
+                    while(!chunkCopied && attempt++ < maxRetries)
+                    {
+                        try
+                        {
+                            using (var sourceStream = new FileStream(_inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                sourceStream.Seek(offset, SeekOrigin.Begin);
+                                byte[] buffer = new byte[length];
+
+                                int bytesRead = sourceStream.Read(buffer, 0, (int)Math.Min(buffer.Length, length));
+
+                                // Write chunk
+                                using (FileStream chunkStream = new FileStream(targetChunkPath, FileMode.Create, FileAccess.Write))
+                                {
+                                    /* keep bytesRead, might not be exact size */
+                                    chunkStream.Write(buffer, 0, bytesRead);
+                                }
+                                /* add bytesRead for the last chunk */
+                                /* for chunck check use md5, sha256 will be used after assemble */
+                                byte[] inputChecksum = fileHelper.GetHashMD5(buffer, bytesRead);
+                                byte[] targetChecksum = fileHelper.GetHashMD5(targetChunkPath);
+                                bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
+                                string checkSumString = BitConverter.ToString(inputChecksum);
+
+                                if (checksumsMatch)
+                                {
+                                    chunkCopied = true;
+                                    Console.WriteLine($"Position: {i}: Hash: {checkSumString}  - ChunkName: {chunkFileName}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"HashError: Position: {i}: ChunkName: {chunkFileName}");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Chunk {i:D4}, attempt {attempt} failed: {ex.Message}");
+                        }
+                    }
+
+                    if (!chunkCopied)
+                    {
+                        throw new IOException($"Chunk {i:D4} failed after {maxRetries} attempts.");
+                    }
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+            return true;
         }
 
         private void _assembleChunks()
