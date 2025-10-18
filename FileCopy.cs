@@ -102,6 +102,7 @@ namespace HS_FileCopy
 
         private void _splitAndCopyFile(int chunkSizeMB)
         {
+            FileHelper fileHelper = new FileHelper();
 
             int chunkSizeBytes = chunkSizeMB * 1024 * 1024;
             byte[] buffer = new byte[chunkSizeBytes];
@@ -123,6 +124,21 @@ namespace HS_FileCopy
                     /* keep bytesRead, might not be exact size */
                     chunkStream.Write(buffer, 0, bytesRead);
                 }
+
+                byte[] inputChecksum = fileHelper.GetChecksum(buffer);
+                byte[] targetChecksum = fileHelper.GetChecksum(targetChunkPath);
+                bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
+                string checkSumString = BitConverter.ToString(inputChecksum);
+
+                if (checksumsMatch)
+                {
+                    Console.WriteLine($"Position: {index}: Checksum: {checkSumString}  - ChunkName: {chunkFileName}");
+                }
+                else
+                {
+                    Console.WriteLine($"ChecksumError: Position: {index}: Checksum: {checkSumString}  - ChunkName: {chunkFileName}");
+                }
+
                 index++;
             }
         }
