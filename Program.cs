@@ -6,7 +6,7 @@ namespace HS_FileCopy
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Started file copy...\n\n");
+            Console.WriteLine("\nStarted file copy...\n");
 
             string inputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\InputDir\\InputFile.bin";
             string outputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\OutputDir\\OutputFile.bin";
@@ -22,8 +22,17 @@ namespace HS_FileCopy
             {
                 Console.WriteLine($"\nError occurred in copying file. Error: {ex.Message}");
             }
-            
-            Console.WriteLine($"\nFile copy completed. Success: {copyStatus}");
+
+            Console.WriteLine($"\nFile copy completed.");
+
+            if (copyStatus)
+            {
+                Console.WriteLine("File has been copied successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Failed to copy file.");
+            } 
         }
     }
 }

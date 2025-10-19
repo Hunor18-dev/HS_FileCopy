@@ -17,8 +17,8 @@ namespace HS_FileCopy
 
             this._inputFilePath = inputFilePath;
             this._outputFilePath = outputFilePath;
-            this._inputDirectory = Path.GetDirectoryName(this._inputFilePath!);
-            this._outputDirectory = Path.GetDirectoryName(this._outputFilePath!);
+            this._inputDirectory = Path.GetDirectoryName(this._inputFilePath!) == null ? "" : Path.GetDirectoryName(this._inputFilePath!)!;
+            this._outputDirectory = Path.GetDirectoryName(this._outputFilePath!) == null ? "" : Path.GetDirectoryName(this._outputFilePath!)!;
         }
         public bool StartFileCopy()
         {
@@ -40,8 +40,8 @@ namespace HS_FileCopy
             (bool inputExists, long inputSize) = fileHelper.FileExists(this._inputFilePath);
             (bool outputExists, long outputSize) = fileHelper.FileExists(this._outputFilePath);
             bool outputDirExists = fileHelper.DirectoryExists(this._outputDirectory!);
-            Console.WriteLine($"Input File - Exists: {inputExists}, Size: {inputSize} bytes\n");
-            Console.WriteLine($"Output File - Exists: {outputExists}, Size: {outputSize} bytes\n");
+            Console.WriteLine($"Input File - Exists: {inputExists}, Size: {inputSize} bytes");
+            Console.WriteLine($"Output File - Exists: {outputExists}, Size: {outputSize} bytes");
 
             if (!inputExists)
             {
@@ -57,7 +57,7 @@ namespace HS_FileCopy
 
             if (outputExists)
             {
-                Console.WriteLine("Output file already exists! Output file will be overwritten.");
+                Console.WriteLine("Output file already exists! Output file will be overwritten.\n");
                 fileHelper.DeleteFile(this._outputFilePath);
             }
             return true;
@@ -69,14 +69,35 @@ namespace HS_FileCopy
             (bool inputExists, long inputSize) = fileHelper.FileExists(this._inputFilePath);
             (bool outputExists, long outputSize) = fileHelper.FileExists(this._outputFilePath);
 
-            if (inputExists && outputExists && inputSize == outputSize)
+            if (!inputExists)
             {
-                /* for final check use sha256 */
-                byte[] inputChecksum = fileHelper.GetHashSHA256(this._inputFilePath);
-                byte[] outputChecksum = fileHelper.GetHashSHA256(this._outputFilePath);
-                return inputChecksum.SequenceEqual(outputChecksum);
+                Console.WriteLine("Input file is missing after copy!");
+                return false;
             }
-            return false;
+
+            if (!outputExists)
+            {
+                Console.WriteLine("Output file is missing after copy!");
+                return false;
+            }
+            
+            if(inputSize != outputSize)
+            {
+                Console.WriteLine("File size mismatch after copy!");
+                return false;
+            }
+
+            /* at this point the files exist and sizes match */
+            byte[] inputChecksum = fileHelper.GetHashSHA256(this._inputFilePath);
+            byte[] outputChecksum = fileHelper.GetHashSHA256(this._outputFilePath);
+            bool match = inputChecksum.SequenceEqual(outputChecksum);
+
+            if (!match)
+            {
+                Console.WriteLine("File checksum mismatch after copy!");
+            }
+
+            return match;
         }
 
         private bool _splitAndCopyFileParallel(int chunkSizeMB, int parallelTasks = 2, int maxRetries = 3)
@@ -112,8 +133,6 @@ namespace HS_FileCopy
                     long offset = i * chunkSizeBytes;
                     /* handle last chunk size */
                     long length = Math.Min(chunkSizeBytes, fileLength - offset);
-                    string chunkFileName = $"chunk_{i:D4}.part";
-                    string targetChunkPath = Path.Combine(_outputDirectory, chunkFileName);
 
                     bool chunkCopied = false;
                     int attempt = 0;
@@ -147,7 +166,7 @@ namespace HS_FileCopy
                                 int copiedChunk = partialDestStream.Read(copiedBuffer, 0, bytesRead);
                                 if (copiedChunk != bytesRead)
                                 {
-                                    Console.WriteLine($"ChunkSizeError: Position: {i}: ChunkName: {chunkFileName}");
+                                    Console.WriteLine($"ChunkSizeError: Position: {i}");
                                     continue;
                                 }
                             }
@@ -159,11 +178,11 @@ namespace HS_FileCopy
                             if (hashesMatch)
                             {
                                 chunkCopied = true;
-                                Console.WriteLine($"Position: {i}: Hash: {hashString}  - ChunkName: {chunkFileName}");
+                                Console.WriteLine($"Position: {i}: Hash: {hashString}");
                             }
                             else
                             {
-                                Console.WriteLine($"HashError: Position: {i}: ChunkName: {chunkFileName}");
+                                Console.WriteLine($"HashError: Position: {i}");
                             }
                         }
                         catch (Exception ex)
