@@ -27,11 +27,8 @@ namespace HS_FileCopy
                 return false;
             }
 
-
-            // bool copyStatus = this._copyFile();
             this._splitAndCopyFileParallel(1); // 1 MB chunks
-            //this._assembleChunks();
-            this._cleanUpChunks();
+
             bool copyStatus = this._verifyCopy();
 
             return copyStatus;
@@ -66,19 +63,6 @@ namespace HS_FileCopy
             return true;
         }
 
-        private bool _copyFile()
-        {
-
-            File.Copy(this._inputFilePath, this._outputFilePath);
-            if (!this._verifyCopy())
-            {
-                Console.WriteLine("File copy verification failed!");
-                return false;
-            }
-            return true;
-
-        }
-
         private bool _verifyCopy()
         {
             var fileHelper = new FileHelper();
@@ -93,51 +77,6 @@ namespace HS_FileCopy
                 return inputChecksum.SequenceEqual(outputChecksum);
             }
             return false;
-        }
-
-        private void _splitAndCopyFileLinear(int chunkSizeMB)
-        {
-            FileHelper fileHelper = new FileHelper();
-
-            int chunkSizeBytes = chunkSizeMB * 1024 * 1024;
-            byte[] buffer = new byte[chunkSizeBytes];
-
-            using FileStream sourceStream = new FileStream(this._inputFilePath!, FileMode.Open, FileAccess.Read);
-            int index = 0;
-            int bytesRead;
-
-            Console.WriteLine($"Splitting {this._inputFilePath} into {chunkSizeMB}MB chunks...");
-
-            while ((bytesRead = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                string chunkFileName = $"chunk_{index:D4}.part";
-                string targetChunkPath = Path.Combine(_outputDirectory, chunkFileName);
-
-                // Write chunk
-                using (FileStream chunkStream = new FileStream(targetChunkPath, FileMode.Create, FileAccess.Write))
-                {
-                    /* keep bytesRead, might not be exact size */
-                    chunkStream.Write(buffer, 0, bytesRead);
-                }
-
-                /* add bytesRead for the last chunk */
-                /* for chunck check use md5, sha256 will be used after assemble */
-                byte[] inputChecksum = fileHelper.GetHashMD5(buffer, bytesRead);
-                byte[] targetChecksum = fileHelper.GetHashMD5(targetChunkPath);
-                bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
-                string checkSumString = BitConverter.ToString(inputChecksum);
-
-                if (checksumsMatch)
-                {
-                    Console.WriteLine($"Position: {index}: Hash: {checkSumString}  - ChunkName: {chunkFileName}");
-                }
-                else
-                {
-                    Console.WriteLine($"HashError: Position: {index}: ChunkName: {chunkFileName}");
-                }
-
-                index++;
-            }
         }
 
         private bool _splitAndCopyFileParallel(int chunkSizeMB, int parallelTasks = 2, int maxRetries = 3)
@@ -157,6 +96,8 @@ namespace HS_FileCopy
 
             var semaphore = new SemaphoreSlim(parallelTasks);
             FileHelper fileHelper = new FileHelper();
+            
+            /* create file so it can be used later */
             using (var outInit = new FileStream(_outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             {
                 outInit.SetLength(fileLength);
@@ -245,37 +186,5 @@ namespace HS_FileCopy
             return allSuccess;
         }
 
-        private void _assembleChunks()
-        {
-
-            string[] chunkFiles = Directory.GetFiles(this._outputDirectory, "chunk_*.part");
-            Array.Sort(chunkFiles);
-
-            using FileStream outputStream = new FileStream(this._outputFilePath!, FileMode.Create, FileAccess.Write);
-
-            FileHelper fileHelper = new FileHelper();
-
-            foreach (string chunkFile in chunkFiles)
-            {
-                using (FileStream chunkStream = new FileStream(chunkFile, FileMode.Open, FileAccess.Read))
-                {
-                    chunkStream.CopyTo(outputStream);   
-                }
-                
-                fileHelper.DeleteFile(chunkFile);
-            }
-        }
-        
-        private void _cleanUpChunks()
-        {
-            string[] chunkFiles = Directory.GetFiles(this._outputDirectory, "chunk_*.part");
-
-            FileHelper fileHelper = new FileHelper();
-
-            foreach (string chunkFile in chunkFiles)
-            {
-                fileHelper.DeleteFile(chunkFile);
-            }
-        }
     }
 }

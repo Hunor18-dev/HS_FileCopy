@@ -38,17 +38,6 @@ namespace HS_FileCopy
             }
         }
 
-        public byte[] GetHashMD5(string filePath)
-        {
-            using (var md5 = MD5.Create())
-            {
-                using (var stream = File.OpenRead(filePath))
-                {
-                    return md5.ComputeHash(stream);
-                }
-            }
-        }
-
         public byte[] GetHashMD5(byte[] byteStream, int bytesRead)
         {
             using (var md5 = MD5.Create())
@@ -60,14 +49,5 @@ namespace HS_FileCopy
                 }
             }
         }
-
-        public byte[] GetHashMD5(FileStream fileStream)
-        {
-            using (var md5 = MD5.Create())
-            {
-                return md5.ComputeHash(fileStream);
-            }
-        }
-
     }
 }
