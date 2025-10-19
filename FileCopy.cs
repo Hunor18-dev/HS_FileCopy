@@ -30,7 +30,7 @@ namespace HS_FileCopy
 
             // bool copyStatus = this._copyFile();
             this._splitAndCopyFileParallel(1); // 1 MB chunks
-            this._assembleChunks();
+            //this._assembleChunks();
             this._cleanUpChunks();
             bool copyStatus = this._verifyCopy();
 
@@ -142,20 +142,11 @@ namespace HS_FileCopy
 
         private bool _splitAndCopyFileParallel(int chunkSizeMB, int parallelTasks = 2, int maxRetries = 3)
         {
-            if (chunkSizeMB < 1)
-            {
-                chunkSizeMB = 1;
-            }
+            if (chunkSizeMB < 1) { chunkSizeMB = 1; }
 
-            if (parallelTasks < 1)
-            {
-                parallelTasks = 1;
-            }
+            if (parallelTasks < 1) { parallelTasks = 1; }
 
-            if (maxRetries < 1)
-            {
-                maxRetries = 1;
-            }
+            if (maxRetries < 1) { maxRetries = 1; }
 
             /* predefine the total chunks number */
             long fileLength = new FileInfo(this._inputFilePath).Length;
@@ -166,6 +157,12 @@ namespace HS_FileCopy
 
             var semaphore = new SemaphoreSlim(parallelTasks);
             FileHelper fileHelper = new FileHelper();
+            using (var outInit = new FileStream(_outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+            {
+                outInit.SetLength(fileLength);
+            }
+            bool allSuccess = true;
+
             Parallel.For(0, numChunks, i =>
             {
                 semaphore.Wait();
@@ -179,39 +176,53 @@ namespace HS_FileCopy
 
                     bool chunkCopied = false;
                     int attempt = 0;
-                    while(!chunkCopied && attempt++ < maxRetries)
+                    while (!chunkCopied && attempt++ < maxRetries)
                     {
                         try
                         {
+                            byte[] buffer = new byte[length];
+                            int bytesRead = 0;
+
                             using (var sourceStream = new FileStream(_inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                             {
                                 sourceStream.Seek(offset, SeekOrigin.Begin);
-                                byte[] buffer = new byte[length];
+                                bytesRead = sourceStream.Read(buffer, 0, (int)Math.Min(buffer.Length, length));
+                            }
+                            /* add bytesRead for the last chunk */
+                            /* for chunk check use md5, sha256 will be used after assemble */
+                            byte[] inputHash = fileHelper.GetHashMD5(buffer, bytesRead);
 
-                                int bytesRead = sourceStream.Read(buffer, 0, (int)Math.Min(buffer.Length, length));
+                            // Write chunk directly into output file at the correct position
+                            using (FileStream destStream = new FileStream(_outputFilePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite))
+                            {
+                                destStream.Seek(offset, SeekOrigin.Begin);
+                                destStream.Write(buffer, 0, bytesRead);
+                            }
 
-                                // Write chunk
-                                using (FileStream chunkStream = new FileStream(targetChunkPath, FileMode.Create, FileAccess.Write))
+                            byte[] copiedBuffer = new byte[bytesRead];
+                            using (FileStream partialDestStream = new FileStream(_outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            {
+                                partialDestStream.Seek(offset, SeekOrigin.Begin);
+                                int copiedChunk = partialDestStream.Read(copiedBuffer, 0, bytesRead);
+                                if (copiedChunk != bytesRead)
                                 {
-                                    /* keep bytesRead, might not be exact size */
-                                    chunkStream.Write(buffer, 0, bytesRead);
+                                    Console.WriteLine($"ChunkSizeError: Position: {i}: ChunkName: {chunkFileName}");
+                                    continue;
                                 }
-                                /* add bytesRead for the last chunk */
-                                /* for chunck check use md5, sha256 will be used after assemble */
-                                byte[] inputChecksum = fileHelper.GetHashMD5(buffer, bytesRead);
-                                byte[] targetChecksum = fileHelper.GetHashMD5(targetChunkPath);
-                                bool checksumsMatch = inputChecksum.SequenceEqual(targetChecksum);
-                                string checkSumString = BitConverter.ToString(inputChecksum);
+                            }
+                            byte[] targetHash = fileHelper.GetHashMD5(copiedBuffer, bytesRead);
 
-                                if (checksumsMatch)
-                                {
-                                    chunkCopied = true;
-                                    Console.WriteLine($"Position: {i}: Hash: {checkSumString}  - ChunkName: {chunkFileName}");
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"HashError: Position: {i}: ChunkName: {chunkFileName}");
-                                }
+                            bool hashesMatch = inputHash.SequenceEqual(targetHash);
+                            string hashString = BitConverter.ToString(inputHash);
+
+                            if (hashesMatch)
+                            {
+                                chunkCopied = true;
+                                Console.WriteLine($"Position: {i}: Hash: {hashString}  - ChunkName: {chunkFileName}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"HashError: Position: {i}: ChunkName: {chunkFileName}");
                             }
                         }
                         catch (Exception ex)
@@ -222,7 +233,8 @@ namespace HS_FileCopy
 
                     if (!chunkCopied)
                     {
-                        throw new IOException($"Chunk {i:D4} failed after {maxRetries} attempts.");
+                        allSuccess = false;
+                        Console.WriteLine($"Chunk {i:D4} failed after {maxRetries} attempts.");
                     }
                 }
                 finally
@@ -230,7 +242,7 @@ namespace HS_FileCopy
                     semaphore.Release();
                 }
             });
-            return true;
+            return allSuccess;
         }
 
         private void _assembleChunks()
