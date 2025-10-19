@@ -27,11 +27,30 @@ namespace HS_FileCopy
                 return false;
             }
 
-            this._splitAndCopyFileParallel(1); // 1 MB chunks
+            bool copyStatus = false;
+            try
+            {
+                this._splitAndCopyFileParallel(1, 10); // 1 MB chunks
 
-            bool copyStatus = this._verifyCopy();
+                copyStatus = this._verifyCopy();
+                if(!copyStatus)
+                {
+                    this._deleteOutputFile();
+                }
+            }
+            finally
+            {
+                this._deleteOutputFile();
+            }
 
             return copyStatus;
+
+        }
+        
+        private void _deleteOutputFile()
+        {
+            var fileHelper = new FileHelper();
+            fileHelper.DeleteFile(this._outputFilePath);
         }
 
         private bool _verifyFiles()
@@ -159,6 +178,7 @@ namespace HS_FileCopy
                                 destStream.Write(buffer, 0, bytesRead);
                             }
 
+                            /* recheck if the written part is correct */
                             byte[] copiedBuffer = new byte[bytesRead];
                             using (FileStream partialDestStream = new FileStream(_outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                             {

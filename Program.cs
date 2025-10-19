@@ -8,8 +8,14 @@ namespace HS_FileCopy
         {
             Console.WriteLine("\nStarted file copy...\n");
 
-            string inputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\InputDir\\InputFile.bin";
-            string outputFilePath = "C:\\Users\\user\\Desktop\\Projects\\HornetSecurity_FileCopy\\FileCopyTest\\OutputDir\\OutputFile.bin";
+            if(args.Length != 2)
+            {
+                Console.WriteLine("Invalid number of arguments. Please provide input and output file paths.");
+                return;
+            }
+
+            string inputFilePath = args[0];
+            string outputFilePath = args[1];
 
             /* at this point, the input file exists and the output file does not exist */
             var fileCopy = new FileCopy(inputFilePath, outputFilePath);
