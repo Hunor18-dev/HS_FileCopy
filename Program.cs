@@ -17,7 +17,6 @@ namespace HS_FileCopy
             string inputFilePath = args[0];
             string outputFilePath = args[1];
 
-            /* at this point, the input file exists and the output file does not exist */
             var fileCopy = new FileCopy(inputFilePath, outputFilePath);
             bool copyStatus = false;
             try
