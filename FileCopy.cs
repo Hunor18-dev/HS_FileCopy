@@ -30,6 +30,7 @@ namespace HS_FileCopy
             bool copyStatus = false;
             try
             {
+                /* at this point, the input file exists and the output file does not exist */
                 this._splitAndCopyFileParallel(1, 10); // 1 MB chunks
 
                 copyStatus = this._verifyCopy();
